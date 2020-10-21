@@ -6,6 +6,9 @@
 *.csv
 *.zip
 data/
+gps/
+trajectories/
+fake_gps/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
