@@ -1,3 +1,10 @@
+# IDE flies
+.idea/
+
+# Data files
+*.txt
+*.csv
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
