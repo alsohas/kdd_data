@@ -5,6 +5,7 @@
 *.txt
 *.csv
 *.zip
+*.part
 data/
 gps/
 trajectories/
