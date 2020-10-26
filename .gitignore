@@ -6,6 +6,10 @@
 *.csv
 *.zip
 *.part
+*.tar
+*.tar.gz
+*.tar.xz
+*.zip
 data/
 gps/
 trajectories/
