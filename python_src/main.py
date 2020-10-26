@@ -1,7 +1,9 @@
 import os
+from collections import OrderedDict
 from dask.diagnostics import ProgressBar
 import dask
 import dask.dataframe as dd
+
 
 data_folder = '../gps/'
 out_folder = '../clean_gps/'
@@ -32,7 +34,8 @@ def csvfy_aux(f, i, cols):
 
 
 def process_group(lng, lat):
-    lonlat = set(zip(lng, lat))
+    lonlat = list(zip(lng, lat))
+    lonlat = list(OrderedDict.fromkeys(lonlat))
     return lonlat
 
 
