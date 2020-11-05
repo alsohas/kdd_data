@@ -5,8 +5,8 @@ import os
 import concurrent.futures
 
 
-data_file = '../../cleaned_gps/'
-out_folder = '../../wgs/'
+data_file = '/home/grad/aislam/didi/clean_gps/'
+out_folder = '/home/grad/aislam/didi/wgs/'
 
 
 def convert_polyline(polyline):
@@ -34,7 +34,7 @@ def convert_part_worker(part_path, part_file_name, folder):
     df.to_csv(f'{out_file}.wgs')
 
 def convert_parts(parts, folder_path, folder):
-    with concurrent.futures.ThreadPoolExecutor(max_workers=30) as executor:      
+    with concurrent.futures.ProcessPoolExecutor(max_workers=15) as executor:      
         for part in parts:
             if '.part' not in part:
                 continue
