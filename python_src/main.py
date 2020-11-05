@@ -10,7 +10,8 @@ out_folder = '../clean_gps/'
 
 
 def csvfy():
-    os.system(f'mkdir {out_folder}')  # make the output folder if it doesn't exist
+    if not os.path.isdir(out_folder):
+        os.mkdirs(out_folder)  # make the output folder if it doesn't exist
     files = os.listdir(data_folder)
     cols = ['DRIVER_ID', 'TRIP_ID', 'TIMESTAMP', 'LONGITUDE', 'LATITUDE']
 
