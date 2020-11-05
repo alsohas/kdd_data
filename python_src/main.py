@@ -1,6 +1,7 @@
 import os
 from collections import OrderedDict
 from dask.diagnostics import ProgressBar
+from coord_convert import transform
 import dask
 import dask.dataframe as dd
 
@@ -18,11 +19,9 @@ def csvfy():
 
 
 def csvfy_aux(f, i, cols):
-    with ProgressBar():
-        df = dask.dataframe.read_csv(os.path.join(data_folder, f), names=cols)
+    df = dask.dataframe.read_csv(os.path.join(data_folder, f), names=cols)
     df = df.drop(columns=['DRIVER_ID'], axis=1)
-    with ProgressBar():
-        df = df.set_index('TIMESTAMP').persist()
+    df = df.set_index('TIMESTAMP').persist()
 
     with ProgressBar():
         ndf = df.groupby('TRIP_ID').apply(lambda x: process_group(x.LONGITUDE, x.LATITUDE)).to_frame(
@@ -34,11 +33,23 @@ def csvfy_aux(f, i, cols):
 
 def process_group(lng, lat):
     lonlat = list(zip(lng, lat))
-    # we want to keep order while eliminating duplicates
-    # hence the need for the ordered dictionary
-    lonlat = list(OrderedDict.fromkeys(lonlat))
+
+    # apply GCJ-02 -> WGS84 conversion
+    lonlat = list(map(convert_latlong, lonlat))
+    
     return lonlat
+
+
+def convert_latlong(coordinate):
+    '''
+    Converts a single GCJ-02 coordinate to WGS84
+    '''
+    lng = coordinate[0]
+    lat = coordinate[1]
+    lng, lat = transform.gcj2wgs(lng, lat)
+    return [lng, lat]
 
 
 if __name__ == '__main__':
     csvfy()
+
