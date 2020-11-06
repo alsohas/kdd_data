@@ -1,3 +1,5 @@
+import pathlib
+from pathlib import Path
 import json
 from tqdm import tqdm
 import ast
@@ -8,8 +10,8 @@ import osmnx as ox
 import os
 from concurrent.futures import ProcessPoolExecutor
 
-wgs_folder = '/home/ai/Public/gps_20161130/'
-map_match_folder = '/home/ai/Public/map_matched_v2/' 
+wgs_folder = '../clean_gps/'
+map_match_folder = '../map_matched/' 
 
 bbox = {'north': 30.7308,
        'south': 30.6480,
@@ -63,24 +65,22 @@ def init_map_match(map_con, infile_path, outfile_path):
     nodes = []
     prev_nodes = []
     all_nodes = []
-    with tqdm(total=len(df)) as pbar:
-        for _, row in df.iterrows():
-            polyline = ast.literal_eval(row['POLYLINE'])
-            prev_nodes = nodes
-            for i in range(len(polyline)):
-                polyline[i] = tuple(polyline[i][::-1])
-            pbar.update(1)
-            try:
-                matcher.match(polyline)
-                nodes = matcher.path_pred_onlynodes
-                if set(nodes) == set(prev_nodes):
-                    continue
-                all_nodes.append(nodes)
-            except:
+    for _, row in df.iterrows():
+        polyline = ast.literal_eval(row['POLYLINE'])
+        prev_nodes = nodes
+        for i in range(len(polyline)):
+            polyline[i] = tuple(polyline[i][::-1])
+        try:
+            matcher.match(polyline)
+            nodes = matcher.path_pred_onlynodes
+            if set(nodes) == set(prev_nodes):
                 continue
-        print(f'Got {len(all_nodes)} trips')
-        with open(f'{outfile_path}', 'w') as outfile:
-            json.dump(all_nodes, outfile, indent=2)
+            all_nodes.append(nodes)
+        except:
+            continue
+    with open(f'{outfile_path}', 'w') as outfile:
+        json.dump(all_nodes, outfile, indent=2)
+    print(f'Finished file: {infile_path}, found {len(all_nodes)} trips')
 
 def match_runner(infile_path, outfile_path):
     graph = load_graph()
@@ -92,12 +92,18 @@ def main():
     if file_name not in os.listdir():
         download_graph()
 
-    gps_files = os.listdir(wgs_folder)
-    with ProcessPoolExecutor(max_workers=4) as exc:
-        for f in gps_files:
-            in_path = os.path.join(wgs_folder, f)
-            outfile_path = os.path.join(map_match_folder, f)
-            exc.submit(match_runner, in_path, outfile_path)
+    gps_folders = sorted(Path(wgs_folder).iterdir(), key=os.path.getmtime)
+    with ProcessPoolExecutor(max_workers=8) as worker:
+        for gps_folder in gps_folders:
+            gps_folder_path = gps_folder
+            gps_files = os.listdir(gps_folder_path)
+            for gps_file in gps_files:
+                gps_file_path = os.path.join(gps_folder_path, gps_file)
+                out_file_path = os.path.join(map_match_folder, pathlib.PurePath(gps_folder_path).name)
+                if not os.path.isdir(out_file_path):
+                    os.makedirs(out_file_path)
+                out_file_path = os.path.join(out_file_path, gps_file)
+                worker.submit(match_runner, gps_file_path, out_file_path)
 
 if __name__=='__main__':
     main()
